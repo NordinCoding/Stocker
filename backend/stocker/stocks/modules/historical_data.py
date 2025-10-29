@@ -1,8 +1,9 @@
 import requests
 import datetime
+import os
 
-API_KEY = "PKERUC2MZPC4V7SIUA7LQHNFTG"
-API_SECRET = "CvUrFxnasvutVJGxEoiE4LgQWoTrX5RLLp7Jmy2YyuqA"
+API_KEY = os.getenv("alpaca_api_key")
+API_SECRET = os.getenv("alpaca_api_secret")
 SYMBOL = "AAPL"
 
 

@@ -12,8 +12,10 @@ from datetime import datetime
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from stocks.modules.helpers import format_trade_time
+import dotenv
+import os
 
-FINNHUB_TOKEN = "d3o9pjhr01qmj830dq40d3o9pjhr01qmj830dq4g"
+FINNHUB_TOKEN = os.getenv("finnhub_api_key")
 
 # Top 50 US based stocks by market cap
 STOCK_SYMBOLS = [

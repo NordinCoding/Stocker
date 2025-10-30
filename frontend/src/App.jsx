@@ -9,7 +9,7 @@ function App() {
   }, []);
 
   const stocks = async () => {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}stocks/`)
+    const response = await fetch(`${import.meta.env.VITE_API_URL}intraday_stocks/`)
 
     let stock_data = await response.json()
     console.log(stock_data)
@@ -24,7 +24,7 @@ function App() {
       <ul>
         {stock.map((data) => {
           return(
-            <li key={data.id}>{data.symbol}: ${data.adj_high}</li>
+            <li key={data.id}>{data.symbol}: ${data.close}</li>
           )
         })}
       </ul>

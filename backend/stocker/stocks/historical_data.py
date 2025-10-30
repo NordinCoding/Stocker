@@ -1,16 +1,24 @@
 import requests
 import datetime
+import django
 import os
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'stocker.settings')
+django.setup()
+
+from models import IntradayStock, EODStock
+from serializers import IntradayStockSerializer, EODStockSerializer
+
+
 
 API_KEY = os.getenv("alpaca_api_key")
 API_SECRET = os.getenv("alpaca_api_secret")
-SYMBOL = "AAPL"
 
 
 params = {
     "timeframe": "1Day",
-    "start": "2020-01-01",
-    "end": "2025-10-23"
+    "start": "2022-01-01",
+    "end": "2025-10-28"
 }
 headers = {
     "Apca-Api-Key-Id": API_KEY,
@@ -38,11 +46,15 @@ for symbol in STOCK_SYMBOLS:
     url = f"https://data.alpaca.markets/v2/stocks/{symbol}/bars"
     response = requests.get(url, headers=headers, params=params)
     json_response = response.json()
-
-    with open(f"market_data/{symbol}.csv", "w") as f:
-        f.write("symbol,close,high,low,open,time_ms\n")
-        print(json_response)
-        for candle in json_response["bars"]:
-            candle_time = candle["t"]
-            time = datetime.datetime.strptime(candle_time, '%Y-%m-%dT%H:%M:%SZ')
-            f.write(f"{symbol},{candle["c"]},{candle["h"]},{candle["l"]},{candle["o"]},{(time.timestamp()) * 1000}\n")
+    for candle in json_response["bars"]:
+        candle_time = candle["t"]
+        time = datetime.datetime.strptime(candle_time, '%Y-%m-%dT%H:%M:%SZ')
+        stocks = {}
+        stocks[symbol] = {"symbol": symbol,
+                    "close": response["c"],
+                    "high": response["h"],
+                    "low": response["l"],
+                    "open": response["o"],
+                    "time_epoch_ms": (time.timestamp()) * 1000}
+        
+        print(f"{symbol},{candle["c"]},{candle["h"]},{candle["l"]},{candle["o"]},{(time.timestamp()) * 1000}\n")

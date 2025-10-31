@@ -12,6 +12,7 @@ from datetime import datetime
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from stocks.modules.helpers import format_trade_time
+from stocks.modules.logger import logger
 import dotenv
 import os
 
@@ -45,8 +46,11 @@ async def listen_to_finnhub():
     async with websockets.connect(url) as ws:
         # subscribe to all symbols
         for symbol in SYMBOLS:
-            await ws.send(json.dumps({"type": "subscribe", "symbol": symbol}))
-            print(f"Subscribed to {symbol}")
+            try:
+                await ws.send(json.dumps({"type": "subscribe", "symbol": symbol}))
+                print(f"Subscribed to {symbol}")
+            except Exception as e:
+                logger.error(f"Failed to subscribe to {symbol} | Error: {e}")
 
         layer = get_channel_layer()
 

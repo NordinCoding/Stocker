@@ -13,7 +13,8 @@ class StockConsumer(AsyncWebsocketConsumer):
         # Receive updates from the group (sent from finnhub_listener)
         await self.send(json.dumps({
             "symbol": event["symbol"],
-            "price": event["price"]
+            "price": event["price"],
+            "time": event["time"]
         }))
         
     async def disconnect(self, close_code):

@@ -1,4 +1,4 @@
-from stocks.models import EODStock, IntradayStock
+from stocks.models import EODStock, IntradayStock, MockIntradayStock
 from rest_framework import serializers
 
 
@@ -12,3 +12,7 @@ class EODStockSerializer(serializers.ModelSerializer):
         model = EODStock
         fields = ('id', 'symbol', 'close', 'high', 'low', 'change', 'open', 'time_epoch_ms')
         
+class MockIntradayStockSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MockIntradayStock
+        fields = ('id', 'symbol', 'close', 'time_epoch_ms')

@@ -38,3 +38,19 @@ class EODStock(models.Model):
     
     def __str__(self):
         return f"Stock: {self.symbol}, price: {self.close}"
+
+
+class MockIntradayStock(models.Model):
+    symbol = models.CharField(max_length=6, db_index=True)
+    close = models.DecimalField(max_digits=12, decimal_places=4)
+    time_epoch_ms = models.BigIntegerField(db_index=True)
+    
+    class Meta:
+        db_table = "mock_intraday_stocks"
+        db_table_comment = "Mock table used for intraday stocks, stores each minute"
+        ordering = ["-time_epoch_ms"]
+        unique_together = [["symbol", "time_epoch_ms"]]
+    
+    
+    def __str__(self):
+        return f"Stock: {self.symbol}, price: {self.close}"  

@@ -35,6 +35,7 @@ def fetch_stocks_intraday():
         ]
         
         # Request current value of each symbol and serialize it
+        
         for symbol in symbols:
             try:
                 response = finnhub_client.quote(symbol)

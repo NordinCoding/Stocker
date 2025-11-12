@@ -13,37 +13,28 @@ import random
 import requests
 import os
 
-
-marketstack_url = "https://api.marketstack.com/v2/eod?access_key=5d7922eb7488d2543d97b8b98993fa13"
-
-marketstack_querystring = {"symbols": "AAPL",
-                "limit": 1}
-
-finnhub_client = finnhub.Client(api_key="d3o9pjhr01qmj830dq40d3o9pjhr01qmj830dq4g")
-
-
-
-
-# Create your views here.
+# Fetch all EOD rows
 class EODStockViewSet(viewsets.ViewSet):
     def list(self, request):
         queryset = EODStock.objects.all()
         serializer = EODStockSerializer(queryset, many=True)
         return Response(serializer.data)
    
-    
+# Fetch all intraday rows
 class IntradayStockViewSet(viewsets.ViewSet):
     def list(self, request):
         queryset = IntradayStock.objects.all()
         serializer = IntradayStockSerializer(queryset, many=True)
         return Response(serializer.data)
     
+# Fetch most recent entry for each symbol
 class DisplayStockViewSet(viewsets.ViewSet):
     def list(self, request):
         queryset = IntradayStock.objects.distinct('symbol').order_by('symbol', 'time_epoch_ms')
         serializer = IntradayStockSerializer(queryset, many=True)
         return Response(serializer.data)
     
+# Fetch all mock rows
 class MockStockViewSet(viewsets.ViewSet):
     def list(self, request):
         queryset = MockIntradayStock.objects.all()
@@ -54,11 +45,11 @@ class MockStockViewSet(viewsets.ViewSet):
 
 # View for populating the mock dev intraday table for testing graphing in development
 def populate_mock_intraday(request):
-    times = [{"start_time": 1761575400000, "end_time": 1761598800000},
-             {"start_time": 1761661800000, "end_time": 1761685200000},
-             {"start_time": 1761748200000, "end_time": 1761771600000},
-             {"start_time": 1761834600000, "end_time": 1761858000000},
-             {"start_time": 1761921000000, "end_time": 1761944400000}]
+    times = [{"start_time": 1762353000000, "end_time": 1762376400000},
+             {"start_time": 1762439400000, "end_time": 1762462800000},
+             {"start_time": 1762525800000, "end_time": 1762549200000},
+             {"start_time": 1762785000000, "end_time": 1762808400000},
+             {"start_time": 1762871400000, "end_time": 1762894800000}]
     
     for time in times:
         start_time = time["start_time"]

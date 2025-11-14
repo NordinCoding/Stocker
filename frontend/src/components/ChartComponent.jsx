@@ -1,12 +1,37 @@
+import { useState, useEffect } from "react";
 import { Line } from "react-chartjs-2";
 
-export default function ChartComponent({ intradayStock, eodStock, symbol, timeRange }) {
-  
-  // Choose dataset based on selected timeRange
+export default function ChartComponent({
+  intradayStock,
+  eodStock,
+  symbol,
+  timeRange,
+  websocketStock
+}) {
+
+  const [livePoint, setLivePoint] = useState(null);
+
+  // Listen for websocket updates
+  useEffect(() => {
+    if (!websocketStock) return;
+
+    const update = Array.isArray(websocketStock)
+      ? websocketStock.find(s => s.symbol === symbol)
+      : websocketStock.symbol === symbol ? websocketStock : null;
+
+    if (update) {
+      setLivePoint({
+        time: Date.now(),
+        price: update.price
+      });
+    }
+  }, [websocketStock, symbol]);
+
+  // Filter which dataset to use based on which option was chosen
   const getFilteredData = () => {
     let sourceData;
     let cutoffDate = new Date();
-    
+
     switch (timeRange) {
       case "1D":
         sourceData = intradayStock;
@@ -29,38 +54,49 @@ export default function ChartComponent({ intradayStock, eodStock, symbol, timeRa
         cutoffDate.setFullYear(cutoffDate.getFullYear() - 1);
         break;
       case "YTD":
-        return eodStock.filter((data) => data.symbol === symbol).reverse();
+        return eodStock.filter((d) => d.symbol === symbol).reverse();
       default:
         sourceData = eodStock;
         cutoffDate.setMonth(cutoffDate.getMonth() - 1);
     }
-    
+
     return sourceData
-      .filter((data) => data.symbol === symbol)
-      .filter((data) => new Date(data.time_epoch_ms) >= cutoffDate)
+      .filter((d) => d.symbol === symbol)
+      .filter((d) => new Date(d.time_epoch_ms) >= cutoffDate)
       .reverse();
   };
 
   const filteredData = getFilteredData();
 
+  // Add live websocket price at the end of the dataset
+  const shouldUseLive = timeRange === "1D" || timeRange === "1W";
+
+  const liveData =
+    livePoint && shouldUseLive
+      ? [
+          ...filteredData,
+          {
+            time_epoch_ms: livePoint.time,
+            close: livePoint.price,
+          }
+        ]
+      : filteredData;
+
   const chartData = {
-    labels: filteredData.map((data) =>
-      new Date(data.time_epoch_ms).toLocaleString()
+    labels: liveData.map((d) =>
+      new Date(d.time_epoch_ms).toLocaleTimeString()
     ),
     datasets: [
       {
         label: "",
-        data: filteredData.map((data) =>
-          Math.round(data.close * 100) / 100
-        ),
+        data: liveData.map((d) => Math.round(d.close * 100) / 100),
         borderColor: "rgba(44, 181, 92, 1)",
         borderWidth: 1.5,
         fill: true,
-        pointStyle: "circle",
         pointRadius: 0,
         backgroundColor: (context) => {
           const ctx = context.chart.ctx;
-          const gradient = ctx.createLinearGradient(0, 200, 0, 700);
+          const gradient = ctx.createLinearGradient(0, 200, 0, 500);
           gradient.addColorStop(0, "rgba(18, 208, 110, 0.4)");
           gradient.addColorStop(1, "rgba(0, 0, 0, 0)");
           return gradient;
@@ -70,15 +106,28 @@ export default function ChartComponent({ intradayStock, eodStock, symbol, timeRa
   };
 
   const options = {
-    plugins: { legend: { display: false } },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          title: (tooltipItems) => {
+            const index = tooltipItems[0].dataIndex;
+            const item = liveData[index];
+            return new Date(item.time_epoch_ms).toLocaleString();
+          }
+        }
+      }
+    },
+    animation: false,
     scales: {
       x: { 
         grid: { display: false }, 
         ticks: { display: false } 
       },
-      y: {
-        grid: { display: false, color: "gray" },
-        ticks: { color: "gray", crossAlign: "far" },
+      y: { 
+        position: 'right',
+        grid: { display: false }, 
+        ticks: { color: "gray" } 
       },
     },
   };

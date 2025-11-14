@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import ChartComponent from './components/ChartComponent';
 import StockList from './components/StockList';
 import LiveUpdates from './components/LiveUpdates';
+import { COMPANY_NAMES } from './utils/stockData';
 
 import { Chart as ChartJS, defaults } from "chart.js/auto";
 
@@ -15,7 +16,7 @@ function App() {
   const [intradayStock, setIntradayStock] = useState ([]);
   const [eodStock, setEODStock] = useState ([]);
   const [timeRange, setTimeRange] = useState('1M');
-  const [selectedSymbol, setSelectedSymbol] = useState ('AMD');
+  const [selectedSymbol, setSelectedSymbol] = useState ('AAPL');
   const [websocketStock, setWebsocket_stock] = useState ([]);
 
   
@@ -76,6 +77,7 @@ function App() {
           return update ? { ...item, close: update.price } : item;
         })
       )
+
     });
     return () => socket.close()
   }, []);
@@ -86,22 +88,33 @@ function App() {
     <>
       <div className="flex min-h-screen justify-center items-center">
         <div className="flex">
-          <div className="border-1 border-stone-800">
+          <div className="border-1 border-stone-800 h-screen overflow-y-auto">
             <StockList 
               displayStock={displayStock} 
               onSelectStock={setSelectedSymbol}
             />
           </div>
           <div className="border-t-1 border-r-1 border-b-1 border-stone-800">
+            <p className='' >{selectedSymbol}</p>
+            <p>{COMPANY_NAMES[selectedSymbol]}</p>
+            <p>
+              {
+                (() => {
+                  const stock = displayStock.find(s => s.symbol === selectedSymbol);
+                  return stock ? `$${Math.round(stock.close * 100) / 100}` : '—';
+                })()
+              }
+            </p>
             <ChartComponent 
               intradayStock={intradayStock}
               eodStock={eodStock} 
               symbol={selectedSymbol} 
               timeRange={timeRange}
+              websocketStock={websocketStock}
             />
             <div>
               <div className="flex flex-row gap-4 justify-center pr-5">
-                <button className="width-5" onClick={() => setTimeRange("1D")}>1D</button>
+                <button onClick={() => setTimeRange("1D")}>1D</button>
                 <button onClick={() => setTimeRange("1W")}>1W</button>
                 <button onClick={() => setTimeRange("1M")}>1M</button>
                 <button onClick={() => setTimeRange("3M")}>3M</button>

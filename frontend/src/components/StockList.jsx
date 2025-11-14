@@ -5,6 +5,7 @@ export default function StockList({ displayStock, onSelectStock }) {
       <ul>
         {displayStock.map((data) => (
           <li 
+            className="hover:bg-zinc-900"
             key={data.id}
             onClick={() => onSelectStock(data.symbol)}
             style={{ cursor: "pointer" }}

@@ -114,7 +114,7 @@ CELERY_RESULT_SERIALIZER = 'json'
 CELERY_BEAT_SCHEDULE = {
     'fetch-stocks-intraday': {
         'task': 'stocks.tasks.fetch_stocks_intraday',
-        'schedule': crontab(minute='*/5'),
+        'schedule': crontab(minute='15,30,45,0'),
         'options': {'queue': 'intraday'},
     },
     

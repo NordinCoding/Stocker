@@ -6,6 +6,7 @@
 __pycache__
 notes.txt
 docker-compose.yml
+docker-compose-prod.yml
 .vscode/
 .idea/
 *.sqlite3

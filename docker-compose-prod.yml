@@ -1,0 +1,120 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: stocker-backend
+    env_file:
+      - ./backend/stocker/stocker/.env.backend.prod
+    ports:
+      - 5002:8000
+    environment:
+      - DEBUG=false
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.frontend
+    container_name: stocker-frontend
+    ports:
+      - 5003:80
+    restart: unless-stopped
+
+  db:
+    image: postgres:16
+    container_name: stocker_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: stocker
+      POSTGRES_USER: stocker
+      POSTGRES_PASSWORD: StockPassword
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U stocker"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  finnhub-listener:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: stocker-finnhub-listener
+    command: python finnhub_listener.py
+    environment:
+      - DEBUG=false
+      - PYTHONUNBUFFERED=1
+      - DJANGO_SETTINGS_MODULE=stocker.settings
+    depends_on:
+      redis:
+        condition: service_started
+      backend:
+        condition: service_started
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: stocker-redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+
+  celery-intraday:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: stocker-celery-intraday
+    command: celery -A stocker worker -Q intraday --loglevel=info
+    environment:
+      - DEBUG=false
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+
+  celery-eod:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: stocker-celery-eod
+    command: celery -A stocker worker -Q eod --loglevel=info
+    environment:
+      - DEBUG=false
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+
+  celery-beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: stocker-celery-beat
+    command: celery -A stocker beat --loglevel=info
+    environment:
+      - DEBUG=false
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:

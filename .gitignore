@@ -4,8 +4,6 @@
 *.env.backend.dev
 .env*
 __pycache__
-Dockerfile
-Dockerfile.frontend
 notes.txt
 docker-compose.yml
 .vscode/

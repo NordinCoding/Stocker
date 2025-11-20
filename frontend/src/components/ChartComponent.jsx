@@ -11,6 +11,10 @@ export default function ChartComponent({
 
   const [livePoint, setLivePoint] = useState(null);
 
+  useEffect(() => {
+    setLivePoint(null);
+  }, [symbol]);
+
   // Listen for websocket updates
   useEffect(() => {
     if (!websocketStock) return;
@@ -19,7 +23,7 @@ export default function ChartComponent({
       ? websocketStock.find(s => s.symbol === symbol)
       : websocketStock.symbol === symbol ? websocketStock : null;
 
-    if (update) {
+    if (update && update.symbol === symbol) {
       setLivePoint({
         time: Date.now(),
         price: update.price

@@ -15,7 +15,7 @@ function App() {
   const [displayStock, setDisplayStock] = useState ([]);
   const [intradayStock, setIntradayStock] = useState ([]);
   const [eodStock, setEODStock] = useState ([]);
-  const [timeRange, setTimeRange] = useState('1M');
+  const [timeRange, setTimeRange] = useState('1W');
   const [selectedSymbol, setSelectedSymbol] = useState ('AAPL');
   const [websocketStock, setWebsocket_stock] = useState ([]);
 
@@ -56,7 +56,11 @@ function App() {
   // Hook that connects to the websocket on page load and constantly
   // updates stock prices based on websocket updates
   useEffect(() => {
+
+    // DEV
     const socket = new WebSocket("ws://localhost:8000/ws/stocks/");
+    // PROD
+    //const socket = new WebSocket("wss://nordinsprojects.site/stocker-api/ws/stocks/");
 
     socket.addEventListener("open", () => {
       socket.send("Connection established");

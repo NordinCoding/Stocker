@@ -1,19 +1,22 @@
 import { useState, useEffect } from "react";
 import { Line } from "react-chartjs-2";
+import { COMPANY_NAMES } from '../utils/stockData';
 
 export default function ChartComponent({
   intradayStock,
   eodStock,
-  symbol,
+  selectedSymbol,
   timeRange,
-  websocketStock
+  websocketStock,
+  setTimeRange,
+  displayStock,
 }) {
 
   const [livePoint, setLivePoint] = useState(null);
 
   useEffect(() => {
     setLivePoint(null);
-  }, [symbol]);
+  }, [selectedSymbol]);
 
   // Listen for websocket updates
   useEffect(() => {
@@ -21,15 +24,15 @@ export default function ChartComponent({
 
     const update = Array.isArray(websocketStock)
       ? websocketStock.find(s => s.symbol === symbol)
-      : websocketStock.symbol === symbol ? websocketStock : null;
+      : websocketStock.symbol === selectedSymbol ? websocketStock : null;
 
-    if (update && update.symbol === symbol) {
+    if (update && update.symbol === selectedSymbol) {
       setLivePoint({
         time: Date.now(),
         price: update.price
       });
     }
-  }, [websocketStock, symbol]);
+  }, [websocketStock, selectedSymbol]);
 
   // Filter which dataset to use based on which option was chosen
   const getFilteredData = () => {
@@ -58,14 +61,14 @@ export default function ChartComponent({
         cutoffDate.setFullYear(cutoffDate.getFullYear() - 1);
         break;
       case "YTD":
-        return eodStock.filter((d) => d.symbol === symbol).reverse();
+        return eodStock.filter((d) => d.symbol === selectedSymbol).reverse();
       default:
         sourceData = eodStock;
         cutoffDate.setMonth(cutoffDate.getMonth() - 1);
     }
 
     return sourceData
-      .filter((d) => d.symbol === symbol)
+      .filter((d) => d.symbol === selectedSymbol)
       .filter((d) => new Date(d.time_epoch_ms) >= cutoffDate)
       .reverse();
   };
@@ -138,7 +141,63 @@ export default function ChartComponent({
 
   return (
     <div style={{ height: "30em", width: "50em" }}>
+      <div className='pl-3 pt-5'>
+        <p className='color: text-zinc-500 text-m font-medium' >{selectedSymbol}</p>
+        <p className='font-medium text-l'>{COMPANY_NAMES[selectedSymbol]}</p>
+        <div className="flex items-end">
+          <p className="font-medium pr-1 text-2xl">$</p>
+          <p className="text-5xl font-sans font-medium pt-1">
+            {
+              // Displays stock price
+              (() => {
+                const stock = displayStock.find(s => s.symbol === selectedSymbol);
+                return stock ? `${Math.round(stock.close * 100) / 100}` : '—';
+              })()
+            }
+          </p>
+        </div>
+      </div>
       <Line data={chartData} options={options} />
+      <div>
+        <div className="flex flex-row gap-4 justify-center pr-5">
+          <button 
+            className={timeRange === "1D" ? "active" : ""}
+            onClick={() => setTimeRange("1D")}
+          >
+            1D
+          </button>
+          <button 
+            className={timeRange === "1W" ? "active" : ""}
+            onClick={() => setTimeRange("1W")}
+          >
+            1W
+          </button>
+          <button 
+            className={timeRange === "1M" ? "active" : ""}
+            onClick={() => setTimeRange("1M")}
+          >
+            1M
+          </button>
+          <button 
+            className={timeRange === "3M" ? "active" : ""}
+            onClick={() => setTimeRange("3M")}
+          >
+            3M
+          </button>
+          <button 
+            className={timeRange === "1Y" ? "active" : ""}
+            onClick={() => setTimeRange("1Y")}
+          >
+            1Y
+          </button>
+          <button 
+            className={timeRange === "YTD" ? "active" : ""}
+            onClick={() => setTimeRange("YTD")}
+          >
+            YTD
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

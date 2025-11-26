@@ -21,6 +21,7 @@ celerybeat.pid
 *.pid
 market_data_csv/
 
+vite.config.js
 node_modules/
 npm-debug.log*
 yarn-debug.log*

@@ -23,7 +23,7 @@ function App() {
   // Fetch current price for each symbol(Check Django API for logic)
   useEffect(() => {
     const fetchDisplayStocks = async () => {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}display_intraday/`);
+      const response = await fetch(`${import.meta.env.VITE_API_URL}intraday_stocks/?latest=true`);
       let display_stock_data = await response.json();
       setDisplayStock(display_stock_data);
     };
@@ -85,47 +85,28 @@ function App() {
     });
     return () => socket.close()
   }, []);
-
-  console.log(selectedSymbol)
   
   return (
     <>
       <div className="flex min-h-screen justify-center items-center">
         <div className="flex">
-          <div className="border-1 border-stone-800 h-screen overflow-y-auto">
+          <div className="border border-stone-800 h-screen overflow-y-auto w-[21rem] thin-scrollbar">
             <StockList 
               displayStock={displayStock} 
               onSelectStock={setSelectedSymbol}
+              selectedSymbol={selectedSymbol}
             />
           </div>
           <div className="border-t-1 border-r-1 border-b-1 border-stone-800">
-            <p className='' >{selectedSymbol}</p>
-            <p>{COMPANY_NAMES[selectedSymbol]}</p>
-            <p>
-              {
-                (() => {
-                  const stock = displayStock.find(s => s.symbol === selectedSymbol);
-                  return stock ? `$${Math.round(stock.close * 100) / 100}` : '—';
-                })()
-              }
-            </p>
             <ChartComponent 
               intradayStock={intradayStock}
               eodStock={eodStock} 
-              symbol={selectedSymbol} 
+              selectedSymbol={selectedSymbol} 
               timeRange={timeRange}
               websocketStock={websocketStock}
+              setTimeRange={setTimeRange}
+              displayStock={displayStock}
             />
-            <div>
-              <div className="flex flex-row gap-4 justify-center pr-5">
-                <button onClick={() => setTimeRange("1D")}>1D</button>
-                <button onClick={() => setTimeRange("1W")}>1W</button>
-                <button onClick={() => setTimeRange("1M")}>1M</button>
-                <button onClick={() => setTimeRange("3M")}>3M</button>
-                <button onClick={() => setTimeRange("1Y")}>1Y</button>
-                <button onClick={() => setTimeRange("YTD")}>YTD</button>
-              </div>
-            </div>
           </div>
         </div>
       </div>

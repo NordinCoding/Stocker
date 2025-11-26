@@ -1,11 +1,11 @@
 @import "tailwindcss";
 
+
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
   background-color: #000000;
 
@@ -13,6 +13,37 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Hide scrollbar (Chrome, Edge, Safari) */
+.no-scrollbar::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+}
+
+/* Hide scrollbar (Firefox) */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+/* Thin subtle scrollbar */
+.thin-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.thin-scrollbar::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 10px;
+}
+
+.thin-scrollbar::-webkit-scrollbar-track {
+  background: #111;
+}
+
+.thin-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #444 #111;
 }
 
 a {
@@ -55,15 +86,24 @@ button:focus-visible {
   outline: 2px solid rgba(44, 181, 92, 1);
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+button.active {
+  outline: 2px solid rgba(44, 181, 92, 1); 
+}
+
+@keyframes flashGreen {
+  0% { background-color: rgba(44, 181, 92, 0.3); }
+  100% { background-color: transparent; }
+}
+
+@keyframes flashRed {
+  0% { background-color: rgba(239, 68, 68, 0.3); }
+  100% { background-color: transparent; }
+}
+
+.price-increase {
+  animation: flashGreen 0.5s ease-out;
+}
+
+.price-decrease {
+  animation: flashRed 0.5s ease-out;
 }

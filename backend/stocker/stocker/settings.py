@@ -15,9 +15,6 @@ load_dotenv()
 
 # SECURITY WARNING: keep the secret key used in production secret!
 
-print("DEBUG ENV VAR: ", os.getenv("DEBUG"))
-print("SECRET KEY ENV VAR: ", os.getenv("SECRET_KEY"))
-
 SECRET_KEY = os.getenv("SECRET_KEY")
 if not SECRET_KEY:
     raise ValueError("SECRET_KEY env variable not set")
@@ -132,7 +129,7 @@ CELERY_RESULT_SERIALIZER = 'json'
 CELERY_BEAT_SCHEDULE = {
     'fetch-stocks-intraday': {
         'task': 'stocks.tasks.fetch_stocks_intraday',
-        'schedule': crontab(minute='15,30,45,0'),
+        'schedule': crontab(minute='16,31,46,1'),
         'options': {'queue': 'intraday'},
     },
     

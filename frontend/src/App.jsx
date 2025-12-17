@@ -92,8 +92,9 @@ function App() {
         <div className="flex">
           <div className="border border-stone-800 h-screen overflow-y-auto w-[21rem] thin-scrollbar">
             <StockList 
-              displayStock={displayStock} 
-              onSelectStock={setSelectedSymbol}
+              displayStock={displayStock}
+              setDisplayStock={setDisplayStock}
+              setSelectStock={setSelectedSymbol}
               selectedSymbol={selectedSymbol}
             />
           </div>

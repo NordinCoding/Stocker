@@ -39,47 +39,68 @@ Websocket listener connected to Finnhub's API for realtime US market data
 
 async def listen_to_finnhub():
     url = f"wss://ws.finnhub.io?token={FINNHUB_TOKEN}"
-    
-    latest_prices = {}
-    last_broadcast = time.time()
-    
-    async with websockets.connect(url) as ws:
-        # subscribe to all symbols
-        for symbol in SYMBOLS:
-            try:
-                await ws.send(json.dumps({"type": "subscribe", "symbol": symbol}))
-                print(f"Subscribed to {symbol}")
-            except Exception as e:
-                logger.error(f"Failed to subscribe to {symbol} | Error: {e}")
+    while True:
+        ws = None
+        try:
+            async with websockets.connect(
+                url,
+                ping_interval=20,
+                ping_timeout=20,
+                close_timeout=5,
+            ) as ws:
+                # subscribe to all symbols
+                latest_prices = {}
+                last_broadcast = time.time()
+                for symbol in SYMBOLS:
+                    try:
+                        await ws.send(json.dumps({"type": "subscribe", "symbol": symbol}))
+                        print(f"Subscribed to {symbol}")
+                    except Exception as e:
+                        logger.error(f"Failed to subscribe to {symbol} | Error: {e}")
 
-        layer = get_channel_layer()
+                layer = get_channel_layer()
 
-        # Listening for messages and creating batches of responses
-        async for message in ws:
-            data = json.loads(message)
-            if data.get("type") == "trade":
-                for trade in data["data"]:
-                    symbol = trade["s"]
-                    price = trade["p"]
-                    trade_time = format_trade_time(trade["t"])
-                    latest_prices[symbol] = (price, trade_time)
-                
-                # throlling sending to consumer group 1 second at a time to not overwhelm frontend
-                now = time.time()
-                if now - last_broadcast >= 1.0 and latest_prices:
-                    print(latest_prices)
-                    for symbol, (price, trade_time) in latest_prices.items():
-                        payload = {
-                                "type": "stock_update",
-                                "symbol": symbol,
-                                "price": price,
-                                "time": trade_time
-                                }
-                    
-                        await layer.group_send("stocks", payload)
+                # Listening for messages and creating batches of responses
+                async for message in ws:
+                    data = json.loads(message)
+                    if data.get("type") == "trade":
+                        for trade in data["data"]:
+                            symbol = trade["s"]
+                            price = trade["p"]
+                            trade_time = format_trade_time(trade["t"])
+                            latest_prices[symbol] = (price, trade_time)
                         
-                    latest_prices.clear()
-                    last_broadcast = now
+                        # throlling sending to consumer group 1 second at a time to not overwhelm frontend
+                        now = time.time()
+                        if now - last_broadcast >= 1.0 and latest_prices:
+                            print(latest_prices)
+                            for symbol, (price, trade_time) in latest_prices.items():
+                                payload = {
+                                        "type": "stock_update",
+                                        "symbol": symbol,
+                                        "price": price,
+                                        "time": trade_time
+                                        }
+                            
+                                await layer.group_send("stocks", payload)
+                                
+                            latest_prices.clear()
+                            last_broadcast = now
+        
+        except Exception as e:
+            logger.error(f"Finnhub connection error: {e}") 
+            
+        finally:
+            if ws is not None:
+                try:
+                    await ws.close()
+                    await asyncio.sleep(1)
+                except Exception as e:
+                    logger.error(f"Error closing websocket connection: {e}")
+                    pass
+            
+            logger.info("Disconnected with websocket, reconnecting in 10s")
+            await asyncio.sleep(10)
                     
 if __name__ == "__main__":
     asyncio.run(listen_to_finnhub())

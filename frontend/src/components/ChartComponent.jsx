@@ -2,6 +2,24 @@ import { useState, useEffect } from "react";
 import { Line } from "react-chartjs-2";
 import { COMPANY_NAMES } from '../utils/stockData';
 
+
+function PercentageDisplay({ chartPercentage }) {
+  const timeRanges = {"1D": "In the last day",
+                      "1W": "In the last week",
+                      "1M": "In the last month",
+                      "3M": "In the last 3 months",
+                      "1Y": "In the last year",
+                      "YTD": "Since beginning"
+  }
+
+  if (chartPercentage.percentage > 0) {
+    return (<p className="text-green-400">+{chartPercentage.percentage}% {timeRanges[chartPercentage.timeRange]} (+${chartPercentage.price_change})</p>)
+  } else {
+    return (<p className="text-red-400">{chartPercentage.percentage}% {timeRanges[chartPercentage.timeRange]} (-${Math.abs(chartPercentage.price_change)})</p>)
+  }
+}
+
+
 export default function ChartComponent({
   intradayStock,
   eodStock,
@@ -13,7 +31,9 @@ export default function ChartComponent({
 }) {
 
   const [livePoint, setLivePoint] = useState(null);
+  const [chartPercentage, setChartPercentage] = useState({});
 
+  // Reset Live point when user Selects different symbol to prevent prices from carrying over
   useEffect(() => {
     setLivePoint(null);
   }, [selectedSymbol]);
@@ -23,7 +43,7 @@ export default function ChartComponent({
     if (!websocketStock) return;
 
     const update = Array.isArray(websocketStock)
-      ? websocketStock.find(s => s.symbol === symbol)
+      ? websocketStock.find(s => s.symbol === selectedSymbol)
       : websocketStock.symbol === selectedSymbol ? websocketStock : null;
 
     if (update && update.symbol === selectedSymbol) {
@@ -31,8 +51,27 @@ export default function ChartComponent({
         time: Date.now(),
         price: update.price
       });
+
     }
   }, [websocketStock, selectedSymbol]);
+
+
+  // Hook to get the change between first and last index of the currently selected graphs array in percentage
+  useEffect(() => {
+    if (!filteredData || filteredData.length < 2) return;
+
+    let first_index = filteredData[0].close;
+    const last_index =
+      livePoint && (timeRange === "1D" || timeRange === "1W")
+        ? livePoint.price
+        : filteredData[filteredData.length - 1].close;
+    let percentage = (last_index - first_index) / first_index * 100;
+    setChartPercentage({"percentage": Number(percentage).toFixed(2),
+                        "timeRange": timeRange,
+                        "price_change": Number(last_index - first_index).toFixed(2)});
+  }, [selectedSymbol, timeRange, intradayStock, eodStock, livePoint]);
+
+
 
   // Filter which dataset to use based on which option was chosen
   const getFilteredData = () => {
@@ -67,13 +106,15 @@ export default function ChartComponent({
         cutoffDate.setMonth(cutoffDate.getMonth() - 1);
     }
 
-    return sourceData
+    sourceData = sourceData
       .filter((d) => d.symbol === selectedSymbol)
       .filter((d) => new Date(d.time_epoch_ms) >= cutoffDate)
       .reverse();
+
+    return sourceData
   };
 
-  const filteredData = getFilteredData();
+  let filteredData = getFilteredData();
 
   // Add live websocket price at the end of the dataset
   const shouldUseLive = timeRange === "1D" || timeRange === "1W";
@@ -156,6 +197,7 @@ export default function ChartComponent({
             }
           </p>
         </div>
+        <div><PercentageDisplay chartPercentage={ chartPercentage }></PercentageDisplay></div>
       </div>
       <Line data={chartData} options={options} />
       <div>

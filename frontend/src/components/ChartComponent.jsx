@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { Line } from "react-chartjs-2";
+import 'chartjs-adapter-date-fns'
 import { COMPANY_NAMES } from '../utils/stockData';
 
 
+// component that dynamically displays price change in percentage dependant on which symbol and timeRange is selected
 function PercentageDisplay({ chartPercentage }) {
   const timeRanges = {"1D": "In the last day",
                       "1W": "In the last week",
@@ -56,7 +58,7 @@ export default function ChartComponent({
   }, [websocketStock, selectedSymbol]);
 
 
-  // Hook to get the change between first and last index of the currently selected graphs array in percentage
+  // Hook to get the difference between first and last index of the currently selected graphs array in percentage
   useEffect(() => {
     if (!filteredData || filteredData.length < 2) return;
 
@@ -131,9 +133,16 @@ export default function ChartComponent({
       : filteredData;
 
   const chartData = {
-    labels: liveData.map((d) =>
-      new Date(d.time_epoch_ms).toLocaleTimeString()
-    ),
+    labels: liveData.map((d) => {
+      const date = new Date(d.time_epoch_ms);
+      if (timeRange === "1D") {
+        return date.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true});
+      } else if (timeRange === "YTD") {
+        return date.toLocaleDateString('nl-NL', { year: '2-digit', month: '2-digit', day: '2-digit' });
+      } else {
+        return date.toLocaleDateString('nl-NL', { month: '2-digit', day: '2-digit' });
+      }
+    }),
     datasets: [
       {
         label: "",
@@ -167,14 +176,48 @@ export default function ChartComponent({
       }
     },
     animation: false,
+    layout: {
+      padding: {
+        left: 0,
+        right: 0
+      }
+    },
     scales: {
-      x: { 
-        grid: { display: false }, 
-        ticks: { display: false } 
+      x: {
+        offset: false,
+        bounds: 'ticks',
+        
+        // Remove some ticks from the start and one from the end to make the graph look nicer
+        afterBuildTicks: (scale) => {
+          if (timeRange === "1Y") {
+            scale.ticks = scale.ticks.slice(5);
+          } else if (timeRange === "YTD") {
+            scale.ticks = scale.ticks.slice(scale.ticks.length * 0.04, -1);
+          } else {
+            scale.ticks = scale.ticks.slice(1, -1);
+          }
+        },
+
+        grid: { 
+          display: true,
+          drawOnChartArea: false,
+          drawTicks: true,
+          tickLength: 10,
+          color: '#555',
+        },
+        ticks: {
+          maxTicksLimit: 12,
+          autoSkip: true,
+          color: '#555',
+        },
       },
       y: { 
         position: 'right',
-        grid: { display: false }, 
+        grid: { display: true,
+                color: '#555',
+                drawOnChartArea: false,
+                drawTicks: false,
+         }, 
         ticks: { color: "gray" } 
       },
     },

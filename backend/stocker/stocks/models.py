@@ -53,4 +53,24 @@ class MockIntradayStock(models.Model):
     
     
     def __str__(self):
-        return f"Stock: {self.symbol}, price: {self.close}"  
+        return f"Stock: {self.symbol}, price: {self.close}"
+    
+
+class NewsArticle(models.Model):
+    article_id = models.CharField(max_length=100, unique=True)
+    link = models.URLField(max_length=500)
+    title = models.CharField(max_length=500)
+    symbol = models.CharField(max_length=6, db_index=True)
+    pub_date = models.DateTimeField(db_index=True)
+    image_url = models.URLField(max_length=500)
+    source_name = models.CharField(max_length=100, db_index=True)
+    source_url = models.URLField(max_length=200)
+    fetched_at = models.DateTimeField(db_index=True)
+    
+    class Meta:
+        db_table = "news_articles"
+        db_table_comment = "table used to store news articles fetched from API"
+        ordering = ["-pub_date"]
+    
+    def __str__(self):
+        return f"Article: {self.title}, pub date: {self.pub_date}"

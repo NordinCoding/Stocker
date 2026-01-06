@@ -11,7 +11,7 @@ function PercentageDisplay({ chartPercentage }) {
                       "1M": "In the last month",
                       "3M": "In the last 3 months",
                       "1Y": "In the last year",
-                      "YTD": "Since beginning"
+                      "YTD": "Since Jan 1st 2022"
   }
 
   if (chartPercentage.percentage > 0) {
@@ -21,6 +21,47 @@ function PercentageDisplay({ chartPercentage }) {
   }
 }
 
+// Component for getting the news articles relevant to the current selected symbol
+function NewsArticles({ currentArticles }) {
+  if (currentArticles.length === 0) {
+    return <p className="text-center pt-5 text-stone-400">No articles available</p>
+  }
+
+  return (
+    <div className="flex justify-center pt-8 gap-10">
+      {currentArticles.map((article) => (
+        <a
+          key={article.id}
+          href={article.link}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group w-72 h-44 rounded-xl overflow-hidden
+                     border border-white/10 bg-white/5 backdrop-blur-sm
+                     transition-all duration-200
+                     hover:border-green-400/40 hover:-translate-y-1"
+        >
+          <img
+            src={article.image_url}
+            alt={article.title}
+            className="absolute inset-0 w-full h-full object-cover
+                       grayscale-[30%] brightness-75
+                       transition-all duration-200
+                       group-hover:grayscale-0 group-hover:brightness-90"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+          <div className="absolute bottom-0 p-3">
+            <p className="text-sm text-white/90 leading-snug line-clamp-2">
+              {article.title}
+            </p>
+            <span className="text-xs text-white/50">
+              News
+            </span>
+          </div>
+        </a>
+      ))}
+    </div>
+  )
+}
 
 export default function ChartComponent({
   intradayStock,
@@ -30,10 +71,12 @@ export default function ChartComponent({
   websocketStock,
   setTimeRange,
   displayStock,
+  newsArticle
 }) {
 
   const [livePoint, setLivePoint] = useState(null);
   const [chartPercentage, setChartPercentage] = useState({});
+  const [currentArticles, setCurrentArticles] = useState([])
 
   // Reset Live point when user Selects different symbol to prevent prices from carrying over
   useEffect(() => {
@@ -73,6 +116,12 @@ export default function ChartComponent({
                         "price_change": Number(last_index - first_index).toFixed(2)});
   }, [selectedSymbol, timeRange, intradayStock, eodStock, livePoint]);
 
+
+
+  useEffect(() => {
+    const articles = newsArticle.filter(a => a.symbol === selectedSymbol)
+    setCurrentArticles(articles)
+  }, [selectedSymbol, newsArticle])
 
 
   // Filter which dataset to use based on which option was chosen
@@ -136,11 +185,11 @@ export default function ChartComponent({
     labels: liveData.map((d) => {
       const date = new Date(d.time_epoch_ms);
       if (timeRange === "1D") {
-        return date.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true});
+        return date.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true, timeZone: 'America/New_York'});
       } else if (timeRange === "YTD") {
-        return date.toLocaleDateString('nl-NL', { year: '2-digit', month: '2-digit', day: '2-digit' });
+        return date.toLocaleDateString('nl-NL', { year: '2-digit', month: '2-digit', day: '2-digit', timeZone: 'America/New_York'});
       } else {
-        return date.toLocaleDateString('nl-NL', { month: '2-digit', day: '2-digit' });
+        return date.toLocaleDateString('nl-NL', { month: '2-digit', day: '2-digit', timeZone: 'America/New_York'});
       }
     }),
     datasets: [
@@ -187,12 +236,14 @@ export default function ChartComponent({
         offset: false,
         bounds: 'ticks',
         
-        // Remove some ticks from the start and one from the end to make the graph look nicer
+        // Remove some ticks from the start and one from the end to make the x axis fit better
         afterBuildTicks: (scale) => {
           if (timeRange === "1Y") {
-            scale.ticks = scale.ticks.slice(5);
+            scale.ticks = scale.ticks.slice(6);
           } else if (timeRange === "YTD") {
             scale.ticks = scale.ticks.slice(scale.ticks.length * 0.04, -1);
+          } else if (timeRange === "1W" || timeRange === "3M") {
+            scale.ticks = scale.ticks.slice(2);
           } else {
             scale.ticks = scale.ticks.slice(1, -1);
           }
@@ -244,7 +295,7 @@ export default function ChartComponent({
       </div>
       <Line data={chartData} options={options} />
       <div>
-        <div className="flex flex-row gap-4 justify-center pr-5">
+        <div className="flex flex-row gap-4 justify-center">
           <button 
             className={timeRange === "1D" ? "active" : ""}
             onClick={() => setTimeRange("1D")}
@@ -282,6 +333,9 @@ export default function ChartComponent({
             YTD
           </button>
         </div>
+      </div>
+      <div>
+        <NewsArticles currentArticles={ currentArticles }></NewsArticles>
       </div>
     </div>
   );

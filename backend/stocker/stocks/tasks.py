@@ -1,12 +1,15 @@
 from celery import shared_task
-from stocks.models import EODStock, IntradayStock
-from stocks.serializers import IntradayStockSerializer, EODStockSerializer
+from stocks.models import EODStock, IntradayStock, NewsArticle
+from stocks.serializers import IntradayStockSerializer, EODStockSerializer, NewsArticleSerializer
 from stocks.modules.helpers import is_market_open
 from stocks.modules.logger import logger
 import finnhub
-from datetime import datetime, date, timedelta
+import datetime
 from time import strftime, localtime, sleep, gmtime
 from dotenv import load_dotenv
+from django.utils import timezone
+import pytz
+import requests
 import sys
 import os
 
@@ -70,8 +73,7 @@ def fetch_stocks_intraday():
     else:
         logger.info("Market is closed, skipping over API request")
         
-    
-
+        
         
 '''     
 Celery task that gets the EOD close data of each symbol 
@@ -116,3 +118,80 @@ def fetch_stocks_eod():
             
         logger.info(f"saved to EOD table: {stocks}")
         sleep(0.2)
+        
+        
+'''
+Celery tasks that fetch articles for relevant stocks/symbols.
+Its split into 2 tasks in order to dodge rate limits by running them 30 minutes apart
+'''
+@shared_task(queue='news')
+def fetch_articles_1():
+    STOCK_SYMBOLS = [
+        "NVDA", "AAPL", "MSFT", "GOOG", "AMZN", "META", "AVGO", "TSLA", 
+        "BRK.B", "WMT", "LLY", "JPM", "V", "NFLX", "MA", "XOM", "UNH",
+        "JNJ", "COST", "ORCL", "HD", "ABBV", "BAC", "PG", "CRM"
+    ]    
+    fetch_articles_logic(STOCK_SYMBOLS)
+    
+    
+@shared_task(queue='news')
+def fetch_articles_2():
+    STOCK_SYMBOLS = [
+        "CVX", "AMD", "KO", "CSCO", "QCOM", "MRK", "TMO", "PEP", "TMUS", 
+        "DIS", "ADBE", "GE", "CAT", "WFC", "INTU", "AXP", "GS", "BLK", 
+        "MU", "ABT", "MCD", "MS", "CMCSA", "TXN", "NOW"
+    ]    
+    fetch_articles_logic(STOCK_SYMBOLS)
+        
+
+def fetch_articles_logic(STOCK_SYMBOLS):
+    for symbol in STOCK_SYMBOLS:
+        url = f"https://newsdata.io/api/1/market?apikey={os.getenv("newsdata_api_key")}&symbol={symbol}&size=2&removeduplicate=1&image=1&prioritydomain=medium"
+        
+        try:
+            response = requests.get(url)
+        
+            top_headlines = response.json()
+            
+            for headlines in top_headlines["results"]:
+                
+                try:
+                    pub_date = datetime.datetime.strptime(headlines["pubDate"], "%Y-%m-%d %H:%M:%S")
+                    pub_date = timezone.make_aware(pub_date, timezone=datetime.timezone.utc)
+                    
+                    fetched_at = datetime.datetime.now(pytz.timezone('UTC'))
+                except Exception as e:
+                    print(f"date conversion error: {e}")
+                    print(top_headlines)
+                
+                article = {
+                        "article_id": headlines["article_id"],
+                        "link": headlines["link"],
+                        "title": headlines["title"],
+                        "symbol": symbol,
+                        "pub_date": pub_date,
+                        "image_url": headlines["image_url"],
+                        "source_name": headlines["source_name"],
+                        "source_url": headlines["source_url"],
+                        "fetched_at": fetched_at
+                        }
+                
+                try:
+                    serializer = NewsArticleSerializer(data=article)
+                    if serializer.is_valid():
+                        serializer.save()
+                        print(F"Saved article: {article['title']}, symbol: {symbol}")
+                    else:
+                        print(f"Serializing failed: {serializer.errors}, symbol: {symbol}")
+                except Exception as e:
+                    print(f"Error serializing: {e}, symbol: {symbol}")
+        
+                
+        
+        except Exception as e:
+            logger.error(f"Error fetching news article: {e}, symbol: {symbol}")
+            
+        sleep(5)
+    
+    
+    

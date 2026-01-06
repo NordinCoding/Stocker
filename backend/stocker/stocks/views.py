@@ -3,13 +3,17 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
-from stocks.models import EODStock, IntradayStock, MockIntradayStock
-from stocks.serializers import IntradayStockSerializer, EODStockSerializer, MockIntradayStockSerializer
+from stocks.models import EODStock, IntradayStock, MockIntradayStock, NewsArticle
+from stocks.serializers import IntradayStockSerializer, EODStockSerializer, MockIntradayStockSerializer, NewsArticleSerializer
 from django.http import HttpResponse
-from time import strftime, localtime
-import finnhub
+from django.utils import timezone
+from django.db.models import Window
+from django.db.models.functions import RowNumber
+from time import strftime, localtime, sleep
+from stocks.modules.logger import logger
+from datetime import timedelta
+import zoneinfo
 import datetime
-import random
 import requests
 import os
 
@@ -41,6 +45,26 @@ class IntradayStockViewSet(ModelViewSet):
         
         return queryset
 
+# Fetches the 2 most recent news articles for each symbol
+class NewsArticlesViewSet(ModelViewSet):
+    serializer_class = NewsArticleSerializer
+    
+    def get_queryset(self):
+        queryset = NewsArticle.objects.all()
+        
+        
+        latest = self.request.query_params.get("latest")
+        
+        if latest:
+            queryset = NewsArticle.objects.annotate(
+                row_num=Window(
+                    expression=RowNumber(),
+                    partition_by='symbol',
+                    order_by='-fetched_at'
+                )
+            ).filter(row_num__lte=2).order_by('symbol', '-fetched_at')
+        
+        return queryset
 
 
 # Function based view for populating the historical database

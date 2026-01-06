@@ -15,17 +15,25 @@ function App() {
   const [displayStock, setDisplayStock] = useState ([]);
   const [intradayStock, setIntradayStock] = useState ([]);
   const [eodStock, setEODStock] = useState ([]);
+  const [newsArticle, setNewsArticle] = useState([]);
   const [timeRange, setTimeRange] = useState('1W');
   const [selectedSymbol, setSelectedSymbol] = useState ('AAPL');
   const [websocketStock, setWebsocket_stock] = useState ([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadStatus, setLoadStatus] = useState({
+    display: false,
+    intraday: false,
+    eod: false,
+    news: false
+  })
 
-  
   // Fetch current price for each symbol(Check Django API for logic)
   useEffect(() => {
     const fetchDisplayStocks = async () => {
       const response = await fetch(`${import.meta.env.VITE_API_URL}intraday_stocks/?latest=true`);
       let display_stock_data = await response.json();
       setDisplayStock(display_stock_data);
+      setLoadStatus(prev => ({ ...prev, display: true}))
     };
     fetchDisplayStocks();
   }, []);
@@ -37,6 +45,7 @@ function App() {
       const response = await fetch(`${import.meta.env.VITE_API_URL}intraday_stocks/`);
       let intraday_stock_data = await response.json();
       setIntradayStock(intraday_stock_data);
+      setLoadStatus(prev => ({ ...prev, intraday: true}))
     };
     fetchIntradayStocks();
   }, []);
@@ -48,9 +57,29 @@ function App() {
       const response = await fetch(`${import.meta.env.VITE_API_URL}eod_stocks/`);
       let eod_stock_data = await response.json();
       setEODStock(eod_stock_data);
+      setLoadStatus(prev => ({ ...prev, eod: true}))
     };
     fetchEODStocks()
   }, []);
+
+
+  // Hook that fetches the relevant news articles from the past 24 Hours
+  useEffect (() => {
+    const fetchNewsArticles = async () => {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}news_articles/?latest=True`);
+      let news_articles_data = await response.json();
+      setNewsArticle(news_articles_data);
+      setLoadStatus(prev => ({ ...prev, news: true}))
+    };
+    fetchNewsArticles()
+  }, []);
+
+
+  useEffect (() => {
+    if (loadStatus.display && loadStatus.intraday && loadStatus.eod && loadStatus.news) {
+      setIsLoading(false);
+    }
+  }, [loadStatus]);
 
 
   // Hook that connects to the websocket on page load and constantly
@@ -86,6 +115,16 @@ function App() {
     return () => socket.close()
   }, []);
   
+  if (isLoading) {
+    return (
+    <div className="flex justify-center items-center h-screen gap-1">
+      <div className="h-8 w-8 bg-green-400 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+      <div className="h-8 w-8 bg-green-400 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+      <div className="h-8 w-8 bg-green-400 rounded-full animate-bounce"></div>
+    </div>
+    )
+  }
+
   return (
     <>
       <div className="flex min-h-screen justify-center items-center">
@@ -107,6 +146,7 @@ function App() {
               websocketStock={websocketStock}
               setTimeRange={setTimeRange}
               displayStock={displayStock}
+              newsArticle={newsArticle}
             />
           </div>
         </div>

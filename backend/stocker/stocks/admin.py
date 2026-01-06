@@ -1,7 +1,8 @@
 from django.contrib import admin
-from .models import EODStock, IntradayStock, MockIntradayStock
+from .models import EODStock, IntradayStock, MockIntradayStock, NewsArticle
 
 # Register your models here.
 admin.site.register(IntradayStock)
 admin.site.register(EODStock)
 admin.site.register(MockIntradayStock)
+admin.site.register(NewsArticle)

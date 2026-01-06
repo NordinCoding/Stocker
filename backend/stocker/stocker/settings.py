@@ -5,9 +5,9 @@ from dotenv import load_dotenv
 from celery.schedules import crontab
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent
 
-load_dotenv()
+load_dotenv(BASE_DIR / ".env.backend.dev", override=True)
 
 
 # Quick-start development settings - unsuitable for production
@@ -137,6 +137,18 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'stocks.tasks.fetch_stocks_eod',
         'schedule': crontab(hour=20, minute=5),
         'options': {'queue': 'eod'}
+    },
+    
+    'fetch-articles-1': {
+        'task': 'stocks.tasks.fetch_articles_1',
+        'schedule': crontab(hour=10, minute=5),
+        'options': {'queue': 'news'}
+    },
+    
+    'fetch-articles-2': {
+        'task': 'stocks.tasks.fetch_articles_2',
+        'schedule': crontab(hour=10, minute=20),
+        'options': {'queue': 'news'}       
     }
 }
 

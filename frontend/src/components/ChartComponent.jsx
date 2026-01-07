@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Line } from "react-chartjs-2";
 import 'chartjs-adapter-date-fns'
 import { COMPANY_NAMES } from '../utils/stockData';
+import LiveClockUpdate from "./LiveClockUpdate";
 
 
 // component that dynamically displays price change in percentage dependant on which symbol and timeRange is selected
@@ -28,7 +29,7 @@ function NewsArticles({ currentArticles }) {
   }
 
   return (
-    <div className="flex justify-center pt-8 gap-10">
+    <div className="flex justify-center pt-10 gap-10">
       {currentArticles.map((article) => (
         <a
           key={article.id}
@@ -219,7 +220,9 @@ export default function ChartComponent({
           title: (tooltipItems) => {
             const index = tooltipItems[0].dataIndex;
             const item = liveData[index];
-            return new Date(item.time_epoch_ms).toLocaleString();
+            return new Date(item.time_epoch_ms).toLocaleString('nl-NL', {
+              timeZone: 'America/New_York'
+            });
           }
         }
       }
@@ -337,6 +340,7 @@ export default function ChartComponent({
       <div>
         <NewsArticles currentArticles={ currentArticles }></NewsArticles>
       </div>
+      <LiveClockUpdate></LiveClockUpdate>
     </div>
   );
 }

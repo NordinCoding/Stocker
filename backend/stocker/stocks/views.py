@@ -56,13 +56,16 @@ class NewsArticlesViewSet(ModelViewSet):
         latest = self.request.query_params.get("latest")
         
         if latest:
-            queryset = NewsArticle.objects.annotate(
-                row_num=Window(
-                    expression=RowNumber(),
-                    partition_by='symbol',
-                    order_by='-fetched_at'
-                )
-            ).filter(row_num__lte=2).order_by('symbol', '-fetched_at')
+            try:
+                queryset = NewsArticle.objects.annotate(
+                    row_num=Window(
+                        expression=RowNumber(),
+                        partition_by='symbol',
+                        order_by='-fetched_at'
+                    )
+                ).filter(row_num__lte=2).order_by('symbol', '-fetched_at')
+            except Exception as e:
+                print(f"error while fetching latest articles: {e}")
         
         return queryset
 

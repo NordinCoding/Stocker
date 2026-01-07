@@ -5,12 +5,14 @@ import {useEffect, useState, useRef, useLayoutEffect} from 'react'
 
 function SearchBox({ onChange }) {
     return ( 
-    <input 
-      type="text" 
-      onChange={ onChange } 
-      placeholder='Search' 
-      className='w-full px-4 py-2 bg-zinc-900 border-b border-stone-800 text-white focus:outline-none'
-    />
+    <div>
+      <input 
+        type="text" 
+        onChange={ onChange } 
+        placeholder='Search' 
+        className='w-full px-4 py-2 bg-zinc-900 border-b border-stone-800 text-white focus:outline-none'
+      />
+    </div> 
     );
 }
 

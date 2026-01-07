@@ -66,7 +66,7 @@ function App() {
   // Hook that fetches the relevant news articles from the past 24 Hours
   useEffect (() => {
     const fetchNewsArticles = async () => {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}news_articles/?latest=True`);
+      const response = await fetch(`${import.meta.env.VITE_API_URL}news_articles/?latest=true`);
       let news_articles_data = await response.json();
       setNewsArticle(news_articles_data);
       setLoadStatus(prev => ({ ...prev, news: true}))

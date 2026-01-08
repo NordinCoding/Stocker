@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import ChartComponent from './components/ChartComponent';
-import StockList from './components/StockList';
-import LiveUpdates from './components/LiveUpdates';
+import ChartComponent from './components/Chart/ChartComponent';
+import StockList from './components/StockList/StockList';
+import LiveUpdates from './components/Utils/LiveUpdates';
 import { COMPANY_NAMES } from './utils/stockData';
 
 import { Chart as ChartJS, defaults } from "chart.js/auto";

@@ -124,7 +124,7 @@ def fetch_stocks_eod():
 Celery tasks that fetch articles for relevant stocks/symbols.
 Its split into 2 tasks in order to dodge rate limits by running them 30 minutes apart
 '''
-@shared_task(queue='news')
+@shared_task(queue='news', max_retries=0)
 def fetch_articles_1():
     STOCK_SYMBOLS = [
         "NVDA", "AAPL", "MSFT", "GOOG", "AMZN", "META", "AVGO", "TSLA", 
@@ -134,7 +134,7 @@ def fetch_articles_1():
     fetch_articles_logic(STOCK_SYMBOLS)
     
     
-@shared_task(queue='news')
+@shared_task(queue='news', max_retries=0)
 def fetch_articles_2():
     STOCK_SYMBOLS = [
         "CVX", "AMD", "KO", "CSCO", "QCOM", "MRK", "TMO", "PEP", "TMUS", 

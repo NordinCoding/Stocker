@@ -39,7 +39,7 @@ const LiveClockUpdate = () => {
     const estTime = date.toLocaleTimeString('nl-NL', { timeZone: 'America/New_York' });
 
     return (
-        <div className="flex flex-row justify-center gap-18 pt-10">
+        <div className="flex flex-row justify-center gap-18 pt-10 pb-10">
             <div className="flex flex-col justify-center pt-10 pl-5 shadow-green-400 shadow-sm border-white/10 rounded-md border-1 border-white h-30 w-65">
                 <p className="text-neutral-400" >New York, US / EST</p>
                 <h2 className="font-mono tracking-wider text-4xl pb-10">

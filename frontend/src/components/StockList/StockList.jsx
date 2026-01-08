@@ -1,6 +1,5 @@
-import { COMPANY_NAMES } from '../utils/stockData';
+import { COMPANY_NAMES } from '../../utils/stockData';
 import {useEffect, useState, useRef, useLayoutEffect} from 'react'
-
 
 
 function SearchBox({ onChange }) {

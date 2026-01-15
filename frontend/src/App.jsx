@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import ChartComponent from './components/Chart/ChartComponent';
 import StockList from './components/StockList/StockList';
 import LiveUpdates from './components/Utils/LiveUpdates';
+import NavBar from './components/NavBar/NavBar';
 import { COMPANY_NAMES } from './utils/stockData';
 
 import { Chart as ChartJS, defaults } from "chart.js/auto";
@@ -127,9 +128,10 @@ function App() {
 
   return (
     <>
-      <div className="flex min-h-screen justify-center items-center">
+      <div className="flex flex-col min-h-screen justify-center items-center">
+        <NavBar></NavBar>
         <div className="flex">
-          <div className="border border-stone-800 h-screen overflow-y-auto w-[21rem] thin-scrollbar">
+          <div className="border border-stone-800 rounded-t-xl h-screen overflow-y-auto w-[21rem] thin-scrollbar">
             <StockList 
               displayStock={displayStock}
               setDisplayStock={setDisplayStock}
@@ -137,7 +139,7 @@ function App() {
               selectedSymbol={selectedSymbol}
             />
           </div>
-          <div className="border-t-1 border-r-1 border-b-1 border-stone-800">
+          <div className="border-t-1 border-r-1 border-b-1 border-stone-800 rounded-r-xl">
             <ChartComponent 
               intradayStock={intradayStock}
               eodStock={eodStock} 
@@ -151,7 +153,6 @@ function App() {
           </div>
         </div>
       </div>
-      <LiveUpdates websocketStock={websocketStock} />
     </>
   );
 }

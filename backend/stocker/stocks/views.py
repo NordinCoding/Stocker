@@ -1,18 +1,17 @@
 from django.shortcuts import render
-from rest_framework import status, viewsets
+from rest_framework import status
 from rest_framework.decorators import api_view
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
-from stocks.models import EODStock, IntradayStock, MockIntradayStock, NewsArticle
-from stocks.serializers import IntradayStockSerializer, EODStockSerializer, MockIntradayStockSerializer, NewsArticleSerializer
+from rest_framework.views import APIView
+from stocks.models import EODStock, IntradayStock, NewsArticle
+from stocks.serializers import IntradayStockSerializer, EODStockSerializer, NewsArticleSerializer, UserRegistrationSerializer
 from django.http import HttpResponse
-from django.utils import timezone
 from django.db.models import Window
 from django.db.models.functions import RowNumber
-from time import strftime, localtime, sleep
 from stocks.modules.logger import logger
-from datetime import timedelta
-import zoneinfo
 import datetime
 import requests
 import os
@@ -68,6 +67,19 @@ class NewsArticlesViewSet(ModelViewSet):
                 print(f"error while fetching latest articles: {e}")
         
         return queryset
+
+
+class UserRegistrationView(APIView):
+    def post(self, request):
+        serializer = UserRegistrationSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+              "message": "User registered successfully"
+            }, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 
 
 # Function based view for populating the historical database

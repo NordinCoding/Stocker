@@ -1,4 +1,6 @@
 from django.db import models
+from django.contrib.postgres.fields import ArrayField
+from django.contrib.auth.models import User
 
 # Create your models here.
 class IntradayStock(models.Model):
@@ -74,3 +76,17 @@ class NewsArticle(models.Model):
     
     def __str__(self):
         return f"Article: {self.title}, pub date: {self.pub_date}"
+    
+
+class WatchList(models.Model):
+    name = models.CharField(max_length=32)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    symbols = ArrayField(models.CharField(max_length=8), blank=True, default=list)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = "watchlists"
+        db_table_comment = "table used to store watchlists created by users"
+        
+    def __str__(self):
+        return f"watchlist: {self.name}, user: {self.user}"

@@ -66,7 +66,7 @@ h1 {
   line-height: 1.1;
 }
 
-button {
+#coolButton {
   border-radius: 8px;
   border: 1px solid transparent;
   width: 6rem;
@@ -78,15 +78,15 @@ button {
   cursor: pointer;
   transition: border-color 0.25s;
 }
-button:hover {
+#coolButton:hover {
   border-color: rgba(44, 181, 92, 1);
 }
-button:focus,
-button:focus-visible {
+#coolButton:focus,
+#coolButton:focus-visible {
   outline: 2px solid rgba(44, 181, 92, 1);
 }
 
-button.active {
+#coolButton.active {
   outline: 2px solid rgba(44, 181, 92, 1); 
 }
 

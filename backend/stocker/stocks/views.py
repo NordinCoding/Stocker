@@ -1,16 +1,21 @@
 from django.shortcuts import render
-from rest_framework import status
-from rest_framework.decorators import api_view
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.authentication import SessionAuthentication, BasicAuthentication
-from rest_framework.response import Response
-from rest_framework.viewsets import ModelViewSet
-from rest_framework.views import APIView
-from stocks.models import EODStock, IntradayStock, NewsArticle
-from stocks.serializers import IntradayStockSerializer, EODStockSerializer, NewsArticleSerializer, UserRegistrationSerializer
 from django.http import HttpResponse
 from django.db.models import Window
 from django.db.models.functions import RowNumber
+from django.contrib.auth.models import User
+from django.contrib.auth import authenticate
+from rest_framework import status
+from rest_framework.decorators import api_view
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.viewsets import ModelViewSet
+from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from stocks.models import EODStock, IntradayStock, NewsArticle, WatchList
+from stocks.serializers import IntradayStockSerializer, EODStockSerializer, NewsArticleSerializer, UserRegistrationSerializer, WatchListSerializer, CustomTokenObtainPairSerializer, UserSerializer
 from stocks.modules.logger import logger
 import datetime
 import requests
@@ -18,6 +23,8 @@ import os
 
 # Fetch all EOD rows or only for one symbol using query param
 class EODStockViewSet(ModelViewSet):
+    permission_classes = [AllowAny]
+    
     serializer_class = EODStockSerializer
 
     def get_queryset(self):
@@ -32,6 +39,8 @@ class EODStockViewSet(ModelViewSet):
 
 # Fetch all intraday rows or only the most recent ones using query param
 class IntradayStockViewSet(ModelViewSet):
+    permission_classes = [AllowAny]
+    
     serializer_class = IntradayStockSerializer
 
     def get_queryset(self):
@@ -46,11 +55,12 @@ class IntradayStockViewSet(ModelViewSet):
 
 # Fetches the 2 most recent news articles for each symbol
 class NewsArticlesViewSet(ModelViewSet):
+    permission_classes = [AllowAny]
+    
     serializer_class = NewsArticleSerializer
     
     def get_queryset(self):
         queryset = NewsArticle.objects.all()
-        
         
         latest = self.request.query_params.get("latest")
         
@@ -69,7 +79,24 @@ class NewsArticlesViewSet(ModelViewSet):
         return queryset
 
 
+class MeView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        return Response(UserSerializer(request.user).data)
+
+
+class WatchListViewSet(ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    serializer_class = WatchListSerializer
+
+    def get_queryset(self):
+        return WatchList.objects.filter(user=self.request.user)
+
+
 class UserRegistrationView(APIView):
+    permission_classes = [AllowAny]
+    
     def post(self, request):
         serializer = UserRegistrationSerializer(data=request.data)
         if serializer.is_valid():
@@ -77,11 +104,30 @@ class UserRegistrationView(APIView):
             return Response({
               "message": "User registered successfully"
             }, status=status.HTTP_201_CREATED)
+        else:
+            print(serializer.errors)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-
-
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
+        
+        
+class UserLogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        try:
+            refresh_token = request.data.get("refresh")
+            if not refresh_token:
+                return Response({"error": "No refresh token found"}, status=status.HTTP_400_BAD_REQUEST)
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            return Response({"message": "Successfully logged out"}, status=status.HTTP_205_RESET_CONTENT)
+        except TokenError as e:
+            return Response({"error": f"Invalid refresh token: {e}"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        
 # Function based view for populating the historical database
 def populate_EOD(request):
     API_KEY = os.getenv("alpaca_api_key")

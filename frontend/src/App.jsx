@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import ChartComponent from './components/Chart/ChartComponent';
-import StockList from './components/StockList/StockList';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import Home from './routes/home';
+import Watchlist from './routes/watchlist';
 import LiveUpdates from './components/Utils/LiveUpdates';
 import NavBar from './components/NavBar/NavBar';
-import { COMPANY_NAMES } from './utils/stockData';
 
 import { Chart as ChartJS, defaults } from "chart.js/auto";
+import { authFetch } from './components/Utils/authFetch';
 
 
 defaults.maintainAspectRatio = false;
@@ -13,6 +14,9 @@ defaults.responsive = true;
 
 function App() {
 
+  const [isLoggedIn, setIsLoggedIn] = useState(localStorage.getItem('access_token') !== null);
+  const [showLogin, setShowLogin] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
   const [displayStock, setDisplayStock] = useState ([]);
   const [intradayStock, setIntradayStock] = useState ([]);
   const [eodStock, setEODStock] = useState ([]);
@@ -27,6 +31,14 @@ function App() {
     eod: false,
     news: false
   })
+
+
+  useEffect(() => {
+    authFetch(`${import.meta.env.VITE_API_URL}api/me/`)
+      .then(res => res.json())
+      .then(data => setCurrentUser(data));
+  }, [showLogin]);
+
 
   // Fetch current price for each symbol(Check Django API for logic)
   useEffect(() => {
@@ -127,33 +139,37 @@ function App() {
   }
 
   return (
-    <>
-      <div className="flex flex-col min-h-screen justify-center items-center">
-        <NavBar></NavBar>
-        <div className="flex">
-          <div className="border border-stone-800 rounded-t-xl h-screen overflow-y-auto w-[21rem] thin-scrollbar">
-            <StockList 
-              displayStock={displayStock}
-              setDisplayStock={setDisplayStock}
-              setSelectStock={setSelectedSymbol}
-              selectedSymbol={selectedSymbol}
-            />
-          </div>
-          <div className="border-t-1 border-r-1 border-b-1 border-stone-800 rounded-r-xl">
-            <ChartComponent 
-              intradayStock={intradayStock}
-              eodStock={eodStock} 
-              selectedSymbol={selectedSymbol} 
-              timeRange={timeRange}
-              websocketStock={websocketStock}
-              setTimeRange={setTimeRange}
-              displayStock={displayStock}
-              newsArticle={newsArticle}
-            />
-          </div>
-        </div>
+    <BrowserRouter>
+      <div className="flex flex-col h-screen items-center overflow-hidden">
+        <NavBar currentUser={currentUser}
+          showLogin={showLogin}
+          setShowLogin={setShowLogin}
+          isLoggedIn={isLoggedIn}
+          setIsLoggedIn={setIsLoggedIn}
+        />
+        <Routes>
+          <Route path="/" element={<Home displayStock={displayStock} 
+            setDisplayStock={setDisplayStock}
+            setSelectedSymbol={setSelectedSymbol}
+            selectedSymbol={selectedSymbol}
+            intradayStock={intradayStock}
+            eodStock={eodStock}
+            timeRange={timeRange}
+            websocketStock={websocketStock}
+            setTimeRange={setTimeRange}
+            newsArticle={newsArticle} />} 
+          />
+          <Route path="/watchlist" element={<Watchlist currentUser={currentUser}
+            setSelectedSymbol={setSelectedSymbol}
+            selectedSymbol={selectedSymbol}
+            displayStock={displayStock}
+            isLoggedIn={isLoggedIn}
+            setIsLoggedIn={setIsLoggedIn}
+            />}
+          />
+        </Routes>
       </div>
-    </>
+    </BrowserRouter>
   );
 }
 

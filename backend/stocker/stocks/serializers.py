@@ -1,6 +1,14 @@
-from stocks.models import EODStock, IntradayStock, MockIntradayStock, NewsArticle
-from rest_framework import serializers
+from stocks.models import EODStock, IntradayStock, MockIntradayStock, NewsArticle, WatchList
 from django.contrib.auth.models import User
+from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from django.contrib.auth.models import User
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ("id", "username")
 
 
 class IntradayStockSerializer(serializers.ModelSerializer):
@@ -57,7 +65,18 @@ class NewsArticleSerializer(serializers.ModelSerializer):
             'source_url',
             'fetched_at'
             )
-        
+
+
+class WatchListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WatchList
+        fields = (
+            'name',
+            'user',
+            'symbols',
+            'created_at'
+            )
+
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password2 = serializers.CharField(style={'input_type': 'password'}, write_only=True)
@@ -80,3 +99,10 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             password=validated_data['password']
         )
         return user
+    
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        return token

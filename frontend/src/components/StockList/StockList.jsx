@@ -71,6 +71,8 @@ export default function StockList({ displayStock, setSelectStock, selectedSymbol
     }
   }, [displayStock])
 
+  console.log("displaystock: ", displayStock)
+
 
 
   return (

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
 import stocks.views as views
@@ -17,7 +17,9 @@ urlpatterns = [
     path('token', views.CustomTokenObtainPairView.as_view(), name="login"),
     path('logout', views.UserLogoutView.as_view(), name="logout"),
     path('token/refresh', TokenRefreshView.as_view(), name='token_refresh'),
-    path("me/", views.MeView.as_view(), name="me")
+    path("me/", views.MeView.as_view(), name="me"),
+    path('delete_account', views.delete_account.as_view(), name='delete_account'),
+    path("api-auth/", include("rest_framework.urls")),
     #path('populate_EOD', views.populate_EOD, name="populate_EOD"),
     #path('populate_mock_intraday', views.populate_mock_intraday, name="populate_mock_intraday")
 ]

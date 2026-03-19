@@ -22,7 +22,9 @@ export default function ChartComponent({
 
   const [livePoint, setLivePoint] = useState(null);
   const [chartPercentage, setChartPercentage] = useState({});
-  const [currentArticles, setCurrentArticles] = useState([])
+  const [currentArticles, setCurrentArticles] = useState([]);
+  // State hook used to check if livedata is empty or not. True means empty
+  const [liveDataStatus, setLiveDataStatus] = useState(false);
 
   // Reset Live point when user Selects different symbol to prevent prices from carrying over
   useEffect(() => {
@@ -73,7 +75,7 @@ export default function ChartComponent({
 
   // Add live websocket price at the end of the dataset
   const shouldUseLive = timeRange === "1D" || timeRange === "1W";
-  const liveData =
+  let liveData =
     livePoint && shouldUseLive
       ? [
           ...filteredData,
@@ -83,8 +85,6 @@ export default function ChartComponent({
           }
         ]
       : filteredData;
-
-
 
   const chartData = {
     labels: liveData.map((d) => {
@@ -119,15 +119,34 @@ export default function ChartComponent({
   // Check Chart/utils.jsx for options/config function
   const options = getChartOptions(timeRange, liveData);
 
+  useEffect(() => {
+    if (timeRange === "1D" && liveData.length === 0) {
+      setLiveDataStatus(true)
+    } else {
+      setLiveDataStatus(false)
+    }
+  }, [timeRange])
+
+
   return (
     <div style={{ height: "30em", width: "50em" }}>
       <div className='pl-3 pt-5'>
         <p className='color: text-zinc-500 text-m font-medium' >{selectedSymbol}</p>
         <p className='font-medium text-l'>{COMPANY_NAMES[selectedSymbol]}</p>
         <DisplayStockPrice displayStock={displayStock} selectedSymbol={selectedSymbol} ></DisplayStockPrice> 
-        <PercentageDisplay chartPercentage={ chartPercentage }></PercentageDisplay>
+        
       </div>
-      <Line data={chartData} options={options} />
+      {liveDataStatus ? (
+        <div className="flex h-[30em] w-[50em] items-center justify-center text-gray-400">
+          <p className="text-l">No data available</p>
+        </div>
+      ) : (
+        <>
+          <PercentageDisplay chartPercentage={ chartPercentage }></PercentageDisplay>
+          <Line data={chartData} options={options} />
+        </>
+        )}
+      
       <TimeRangeButtons timeRange={timeRange} setTimeRange={setTimeRange}></TimeRangeButtons>
       <LiveClockUpdate></LiveClockUpdate>
       <NewsArticles currentArticles={ currentArticles }></NewsArticles>

@@ -36,7 +36,10 @@ function App() {
   useEffect(() => {
     authFetch(`${import.meta.env.VITE_API_URL}api/me/`)
       .then(res => res.json())
-      .then(data => setCurrentUser(data));
+      .then(data => setCurrentUser(data))
+      .catch(() => {
+        setIsLoggedIn(false)
+      })
   }, [showLogin]);
 
 
@@ -165,6 +168,13 @@ function App() {
             displayStock={displayStock}
             isLoggedIn={isLoggedIn}
             setIsLoggedIn={setIsLoggedIn}
+            setDisplayStock={setDisplayStock}
+            intradayStock={intradayStock}
+            eodStock={eodStock}
+            timeRange={timeRange}
+            websocketStock={websocketStock}
+            setTimeRange={setTimeRange}
+            newsArticle={newsArticle}
             />}
           />
         </Routes>

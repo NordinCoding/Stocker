@@ -68,14 +68,42 @@ class NewsArticleSerializer(serializers.ModelSerializer):
 
 
 class WatchListSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(required=False, allow_blank=True)
+    
     class Meta:
         model = WatchList
         fields = (
+            'id',
             'name',
-            'user',
             'symbols',
             'created_at'
             )
+    def validate(self, data):
+        
+        user = self.context["request"].user
+        name = data.get("name")
+        # Check if watchlist name is empty
+        if not name:
+            raise serializers.ValidationError({"response": "Please enter a name"})
+        
+        
+        # Check if symbols were selected
+        if not data.get("symbols"):
+            raise serializers.ValidationError({"response": "Please select atleast one symbol."})
+        
+        # Check for duplicate watchlist name
+        qs = WatchList.objects.filter(user=user, name=name)
+        
+        # allow updating the same object
+        if self.instance:
+            qs = qs.exclude(pk=self.instance.pk)
+
+        if qs.exists():
+            raise serializers.ValidationError({
+                "response": "You already have a watchlist with this name."
+            })
+        
+        return data
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):

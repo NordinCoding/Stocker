@@ -84,6 +84,22 @@ class MeView(APIView):
     
     def get(self, request):
         return Response(UserSerializer(request.user).data)
+    
+    
+class delete_account(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def delete(self, request):
+        user = self.request.user
+        if user:
+            user.delete()
+        else:
+            return Response({
+                "message": "user deletion unsuccessful"
+            }, status=status.HTTP_400_BAD_REQUEST)
+        return Response({
+            "message": "user deleted successfully"
+            }, status=status.HTTP_200_OK)
 
 
 class WatchListViewSet(ModelViewSet):
@@ -92,6 +108,9 @@ class WatchListViewSet(ModelViewSet):
 
     def get_queryset(self):
         return WatchList.objects.filter(user=self.request.user)
+    
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
 
 
 class UserRegistrationView(APIView):

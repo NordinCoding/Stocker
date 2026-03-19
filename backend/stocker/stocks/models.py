@@ -87,6 +87,12 @@ class WatchList(models.Model):
     class Meta:
         db_table = "watchlists"
         db_table_comment = "table used to store watchlists created by users"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "name"],
+                name="unique_watchlist_per_user"
+            )
+        ]
         
     def __str__(self):
         return f"watchlist: {self.name}, user: {self.user}"

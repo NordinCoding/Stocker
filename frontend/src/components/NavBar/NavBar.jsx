@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import ResponseForm from './responseForm';
 import { Link } from 'react-router-dom';
+import { authFetch } from '../Utils/authFetch';
 
 
 function RegisterForm({setShowRegister, setShowLogin, ResponseForm}) {
@@ -20,8 +21,7 @@ function RegisterForm({setShowRegister, setShowLogin, ResponseForm}) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
-    
-    const response = await fetch('http://localhost:8000/api/register', {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}api/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -79,7 +79,7 @@ function LoginForm({setIsLoggedIn, setShowLogin, ResponseForm, showLogin}) {
     e.preventDefault();
     const formData = new FormData(e.target);
 
-    const response = await fetch('http://localhost:8000/api/token', {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}api/token`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -121,6 +121,57 @@ function LoginForm({setIsLoggedIn, setShowLogin, ResponseForm, showLogin}) {
 }
 
 
+function deleteCurrentUser(setRefreshTrigger, setIsLoggedIn) {
+    authFetch(`${import.meta.env.VITE_API_URL}api/delete_account`, { 
+    method: "DELETE", 
+    headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem("access_token")}`
+    },
+    })
+    .then(res => {
+      if (res.ok) {
+        setRefreshTrigger(prev => prev + 1);
+        setIsLoggedIn(false);
+      }
+    })
+    .catch(() => {
+      console.log("SOMEHOW DELETION FAILED")
+    }) 
+}
+
+
+function DeleteUserForm({setIsLoggedIn, setShowDeleteUser, showDeleteUser, setRefreshTrigger}) {
+
+  useEffect(() => {
+    const handleEscape = async (e) => {
+      if (e.key === "Escape") {
+        setShowDeleteUser(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape)
+  }, [showDeleteUser]);
+
+  return (
+    <>
+      <div className='fixed inset-0 bg-black/50 flex items-center justify-center z-50'>
+        <div className='flex flex-col gap-5 bg-neutral-950 p-8 rounded-lg'>
+          <p>Are you sure you want to delete your account?</p>
+          <div className='flex flex-row gap-3 items-center justify-center'>
+            <button id='coolButton' onClick={() => deleteCurrentUser(setRefreshTrigger, setIsLoggedIn)}>Yes</button>
+            <button id='coolButton' onClick={() => setShowDeleteUser(false)}>No</button>
+          </div>
+        </div>
+      </div>
+    </>
+  )
+}
+
+
+
+
 function LogoutConfirmForm({setShowLogoutConfirm, LogoutForm}) {
   return (
     <>
@@ -141,16 +192,43 @@ function LogoutConfirmForm({setShowLogoutConfirm, LogoutForm}) {
 export default function NavBar({currentUser, showLogin, setShowLogin, isLoggedIn, setIsLoggedIn}) {
     const [showRegister, setShowRegister] = useState(false);
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+    const [showUserDropdown, setShowUserDropdown] = useState(false);
+    const [showDeleteUser, setShowDeleteUser] = useState(false);
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
+    const dropdownRef = useRef(null);
+
+
+    useEffect(() => {
+      const handleClick = async (e) => {
+        if (!dropdownRef.current.contains(e.target)) {
+          if (!showDeleteUser && !showLogoutConfirm) {
+            setShowUserDropdown(false)
+          }
+        }
+      }
+      document.addEventListener('mousedown', handleClick)
+      return () => document.removeEventListener('mousedown', handleClick)
+    }, [showDeleteUser, showLogoutConfirm])
+
+
+    useEffect(() => {
+      if (showDeleteUser) {
+        setShowDeleteUser(false);
+      }
+    }, [refreshTrigger])
 
 
     // Remove tokens from localstorage to logout user and close logout form
     function LogoutForm() {
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
+      if (showUserDropdown) {
+        setShowUserDropdown(false)
+      }
       setIsLoggedIn(false);
       setShowLogoutConfirm(false);
     }
-
+    
     return (
         <>  
             <div className="flex flex-row h-15 w-[71rem] items-center justify-between">
@@ -170,9 +248,33 @@ export default function NavBar({currentUser, showLogin, setShowLogin, isLoggedIn
                 </div>
                 {/* If user is logged in only show logout button, if not logged in show login and register buttons */}
                 {isLoggedIn ? (
-                  <div className="flex flex-row gap-3 w-30 text-neutral-400">
-                    <p>{currentUser && currentUser.username}</p>
-                    <p onClick={() => setShowLogoutConfirm(true)} className="cursor-pointer hover:text-gray-200">Logout</p>
+                  <div className="flex flex-row gap-5 w-30 text-neutral-400"
+                  ref={dropdownRef}>
+                    <div className='relative'>
+                      <p 
+                      className='cursor-pointer hover:text-gray-200' 
+                      onClick={() => setShowUserDropdown(!showUserDropdown)}>
+                        {currentUser && currentUser.username}
+                      </p>
+                      {showUserDropdown ? (
+                        <div className='flex flex-col gap-2 absolute w-[8rem] bg-black flex p-1 mt-1 pt-2 pb-2  border-1 border-stone-800 rounded-md'
+                        >
+                          <p 
+                          className='cursor-pointer hover:text-gray-200'
+                          onClick={() => setShowDeleteUser(true)}
+                          >
+                            Delete account
+                            </p>
+                          <p onClick={() => setShowLogoutConfirm(true)} className="cursor-pointer hover:text-gray-200">Logout</p>
+                        </div>
+                        
+                      ) : (
+                        null
+                      )
+                      } 
+
+                    </div>
+                    
                   </div> 
                 ) : (
                   <div className="flex flex-row gap-3 w-30 text-neutral-400">
@@ -206,6 +308,15 @@ export default function NavBar({currentUser, showLogin, setShowLogin, isLoggedIn
                 setShowRegister={setShowRegister}
                 setShowLogin={setShowLogin} 
                 ResponseForm={ResponseForm}
+              />
+            )}
+
+            {showDeleteUser && (
+              <DeleteUserForm
+              setIsLoggedIn={setIsLoggedIn}
+              setShowDeleteUser={setShowDeleteUser}
+              showDeleteUser={showDeleteUser}
+              setRefreshTrigger={setRefreshTrigger}
               />
             )}
         </>

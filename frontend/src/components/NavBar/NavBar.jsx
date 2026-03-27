@@ -199,15 +199,17 @@ export default function NavBar({currentUser, showLogin, setShowLogin, isLoggedIn
 
 
     useEffect(() => {
-      const handleClick = async (e) => {
-        if (!dropdownRef.current.contains(e.target)) {
-          if (!showDeleteUser && !showLogoutConfirm) {
-            setShowUserDropdown(false)
+      if (isLoggedIn) {
+        const handleClick = async (e) => {
+          if (!dropdownRef.current.contains(e.target)) {
+            if (!showDeleteUser && !showLogoutConfirm) {
+              setShowUserDropdown(false)
+            }
           }
         }
+        document.addEventListener('mousedown', handleClick)
+        return () => document.removeEventListener('mousedown', handleClick)
       }
-      document.addEventListener('mousedown', handleClick)
-      return () => document.removeEventListener('mousedown', handleClick)
     }, [showDeleteUser, showLogoutConfirm])
 
 
@@ -234,7 +236,7 @@ export default function NavBar({currentUser, showLogin, setShowLogin, isLoggedIn
             <div className="flex flex-row h-15 w-[71rem] items-center justify-between">
                 <div className="w-28">
                   {isLoggedIn && (
-                    <Link to="/watchlist">
+                    <Link to="./watchlist">
                       <p className='pl-5 cursor-pointer text-neutral-400 hover:text-gray-200'>
                         Watchlists
                       </p>
@@ -242,7 +244,7 @@ export default function NavBar({currentUser, showLogin, setShowLogin, isLoggedIn
                   )}
                 </div>
                 <div className="flex ">
-                  <Link to="/">
+                  <Link to=".">
                     <h2 className=" font-mono text-4xl text-green-400">STOCKER</h2>
                   </Link>
                 </div>

@@ -25,9 +25,9 @@ def fetch_stocks_intraday():
     
     if is_market_open():
         
-        logger.info("Starting intraday fetch")
+        print("Starting intraday fetch")
         
-        finnhub_client = finnhub.Client(api_key=os.getenv("finnhub_api_key"))
+        finnhub_client = finnhub.Client(api_key=os.getenv("finnhub_api_key"), timeout=30)
         symbols = [
         "NVDA", "AAPL", "MSFT", "GOOG", "AMZN", "META", "AVGO", "TSLA", 
         "BRK.B", "WMT", "LLY", "JPM", "V", "NFLX", "MA", "XOM", "UNH",
@@ -43,35 +43,39 @@ def fetch_stocks_intraday():
             try:
                 response = finnhub_client.quote(symbol)
             except Exception as e:
-                logger.error(f"API request Error: {e}")
+                print(f"API request Error: {e}")
                 continue
             
-            stocks = {"symbol": symbol,
+            raw_epoch_ms = response["t"] * 1000
+            candle_epoch_ms = (raw_epoch_ms // 900000) * 900000
+            
+            IntradayStock.objects.update_or_create(
+                symbol=symbol,
+                time_epoch_ms=candle_epoch_ms,
+                defaults={
                     "close": response["c"],
                     "high": response["h"],
                     "low": response["l"],
                     "change": response["d"],
                     "open": response["o"],
-                    "time_epoch_ms": (response["t"] * 1000)}
-            
-            serializer = IntradayStockSerializer(data=stocks)
-            if serializer.is_valid():
-                serializer.save()
+                }
+            )
 
-            logger.info(f"saved to Intraday table: {stocks}")
+            print(f"saved to Intraday table: {symbol} | Timestamp: {candle_epoch_ms}")
             sleep(0.2)
         
         # Get the epoch in ms of last week and delete anything older than a week
         
-        logger.info("Deleting week old intraday rows")
-        week_ago = stocks["time_epoch_ms"] - 604800000
+        last_candle_ms = candle_epoch_ms
+        week_ago_ms = last_candle_ms - 7 * 24 * 60 * 60 * 1000  # 7 days in ms
         try:
-            IntradayStock.objects.filter(time_epoch_ms__lt=week_ago).delete()
+            deleted_count, _ = IntradayStock.objects.filter(time_epoch_ms__lt=week_ago_ms).delete()
+            print(f"Deleted {deleted_count} intraday rows older than a week")
         except Exception as e:
-            logger.error(f"Failed to delete week old intraday rows: {e}")
+            print(f"Failed to delete week old intraday rows: {e}")
         
     else:
-        logger.info("Market is closed, skipping over API request")
+        print("Market is closed, skipping over API request")
         
         
         

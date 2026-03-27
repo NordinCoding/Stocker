@@ -73,6 +73,10 @@ export default function ChartComponent({
 
   let filteredData = getFilteredData(timeRange, intradayStock, eodStock, selectedSymbol);
 
+  useEffect(() => {
+    console.log("filtered data: ", filteredData)
+  }, [timeRange])
+
   // Add live websocket price at the end of the dataset
   const shouldUseLive = timeRange === "1D" || timeRange === "1W";
   let liveData =

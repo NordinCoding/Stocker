@@ -142,6 +142,7 @@ function App() {
   }
 
   return (
+    /*PROD: <BrowserRouter basename="/stocker/"> */
     <BrowserRouter>
       <div className="flex flex-col h-screen items-center overflow-hidden">
         <NavBar currentUser={currentUser}

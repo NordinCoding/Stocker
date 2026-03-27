@@ -27,7 +27,7 @@ def fetch_stocks_intraday():
         
         print("Starting intraday fetch")
         
-        finnhub_client = finnhub.Client(api_key=os.getenv("finnhub_api_key"), timeout=30)
+        finnhub_client = finnhub.Client(api_key=os.getenv("finnhub_api_key"))
         symbols = [
         "NVDA", "AAPL", "MSFT", "GOOG", "AMZN", "META", "AVGO", "TSLA", 
         "BRK.B", "WMT", "LLY", "JPM", "V", "NFLX", "MA", "XOM", "UNH",
@@ -40,11 +40,17 @@ def fetch_stocks_intraday():
         # Request current value of each symbol and serialize it
         
         for symbol in symbols:
-            try:
-                response = finnhub_client.quote(symbol)
-            except Exception as e:
-                print(f"API request Error: {e}")
-                continue
+            for attempt in range(3):
+                try:
+                    response = finnhub_client.quote(symbol)
+                    break
+                except Exception as e:
+                    print(f"API request Error: {e} for {symbol}. retrying attempt {attempt + 1}")
+                    if attempt < 2:
+                        sleep(3)
+                    else:
+                        print(f"{symbol} could not be fetched | error: {e}")
+                    continue
             
             raw_epoch_ms = response["t"] * 1000
             candle_epoch_ms = (raw_epoch_ms // 900000) * 900000

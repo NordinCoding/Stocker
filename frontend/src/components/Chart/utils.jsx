@@ -24,7 +24,7 @@ export const getFilteredData = (timeRange, intradayStock, eodStock, selectedSymb
         sourceData = eodStock;
         cutoffDate.setFullYear(cutoffDate.getFullYear() - 1);
         break;
-        case "YTD":
+        case "MAX":
         return eodStock.filter((d) => d.symbol === selectedSymbol).reverse();
         default:
         sourceData = eodStock;
@@ -73,7 +73,7 @@ export const getChartOptions = (timeRange, liveData) => {
         afterBuildTicks: (scale) => {
           if (timeRange === "1Y") {
             scale.ticks = scale.ticks.slice(6);
-          } else if (timeRange === "YTD") {
+          } else if (timeRange === "MAX") {
             scale.ticks = scale.ticks.slice(scale.ticks.length * 0.04, -1);
           } else if (timeRange === "1W" || timeRange === "3M") {
             scale.ticks = scale.ticks.slice(2);

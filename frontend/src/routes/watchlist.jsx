@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { authFetch } from '../components/Utils/authFetch';
 import { useNavigate } from 'react-router-dom';
-import { COMPANY_NAMES } from '../utils/stockData'
 import StockList from '../components/StockList/StockList';
 import ChartComponent from '../components/Chart/ChartComponent';
+import  { COMPANY_NAMES }  from '../utils/stockData';
 
 
 async function deleteWatchlist(userSelectedWatchList, userWatchLists, setRefreshTrigger) {
@@ -128,8 +128,12 @@ function CreateWatchList({
     currentUser, 
     }) {
 
+
+    const companyNames = COMPANY_NAMES
+    console.log(companyNames)
+
     const [watchlistFeedback, setWatchlistFeedback] = useState("")
-        
+
     const companySymbols = [
         'AAPL','ABBV','ABT','ADBE','AMD','AMZN','AVGO','AXP','BAC',
         'BLK','BRK.B','CAT','CMCSA','COST','CRM','CSCO','CVX','DIS','GE',

@@ -95,7 +95,7 @@ export default function ChartComponent({
       const date = new Date(d.time_epoch_ms);
       if (timeRange === "1D") {
         return date.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true, timeZone: 'America/New_York'});
-      } else if (timeRange === "YTD") {
+      } else if (timeRange === "MAX") {
         return date.toLocaleDateString('nl-NL', { year: '2-digit', month: '2-digit', day: '2-digit', timeZone: 'America/New_York'});
       } else {
         return date.toLocaleDateString('nl-NL', { month: '2-digit', day: '2-digit', timeZone: 'America/New_York'});

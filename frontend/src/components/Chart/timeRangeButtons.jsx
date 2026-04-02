@@ -1,5 +1,5 @@
 function TimeRangeButtons({ timeRange, setTimeRange }) {
-  const ranges = ["1D", "1W", "1M", "3M", "1Y", "YTD"];
+  const ranges = ["1D", "1W", "1M", "3M", "1Y", "MAX"];
   
   return (
     <div className="flex flex-row gap-4 justify-center pb-2 border-b-1 border-stone-800">
